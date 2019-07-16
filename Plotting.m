@@ -1,3 +1,13 @@
+% ======================================================================= %
+% Solving the system of integral equations in the Konda/Erdogan paper     %
+% Ryan Kelly                                                              %
+% University of Houston Downtown, REU 2019                                %
+% 7/12/2019                                                               %
+%                                                                         %
+% This code calculates the relative crack surface displacement and plots  %
+% it on the domain for two combinations of delta and theta in comparison  %
+% to a nonhomogeneous medium (delta = 0)                                  %
+% ======================================================================= %
 clear; clc; close all; format compact; format long g
 set(0,'DefaultTextInterpreter','latex')
 
@@ -9,7 +19,6 @@ An = zeros(N,2);
 Bn = zeros(N,2);
 kappa = 3 - 4*nu; % Plane strain
 % kappa = (3 - nu)/(1 + nu); % Plane stress
-LoBnd = -100;
 UpBnd = 100;
 
 for ij = 1:2
@@ -32,12 +41,6 @@ for ij = 1:2
             r(ii) = cos(ii*pi/N);
         end
         s(N+1) = cos((2*(N+1)-1)*pi/(N*2));
-%         for n = 1:N
-%             r(n) = cos(((n)*pi)/(N));
-%         end
-%         for n = 1:N+1
-%             s(n) = cos((2*n+1)*pi/(2*(N+1)));
-%         end
 
         % Loading Functions
         p1 = -ones(N,1).*exp(-B.*r);
@@ -95,25 +98,6 @@ for ij = 1:2
         % Extracting An and Bn from result
         An(:,ij) = X(1:N);
         Bn(:,ij) = X(N+1:end);
-
-
-        % Calculating SIFs
-        k1a = -sum(Bn).*exp(B);
-        k2a = -sum(An).*exp(B);
-        k1na = 0;
-        k2na = 0;
-
-        for ii = 1:N
-            if mod(ii,2) == 0
-                k1na = k1na + Bn(ii);
-                k2na = k2na + An(ii);
-            else
-                k1na = k1na - Bn(ii);
-                k2na = k2na - An(ii);
-            end
-        end
-        k1na = k1na.*exp(-B); % exp(-B) is because it is the left side of the crack
-        k2na = k2na.*exp(-B);
         
 end
 
@@ -121,19 +105,26 @@ x = linspace(-.999,.999,200);
 f1 = zeros(1,length(x));
 f2 = zeros(1,length(x));
 f3 = zeros(1,length(x));
+n = 1:N;
 
 for i = 1:length(x)
     f1(i) = sqrt(1 - x(i).^2);
-    f2(i) = -25*2/(1+kappa)*(1/N)*sqrt(1 - x(i).^2).*sum(Bn(:,1)'.*u(x(i),0:N-1)); % This is scaled arbitrarily
-    f3(i) = -46*2/(1+kappa)*(1/N)*sqrt(1 - x(i).^2).*sum(Bn(:,2)'.*u(x(i),0:N-1)); % This is scaled arbitrarily
+    f2(i) = -2/(1+kappa)*sqrt(1 - x(i).^2).*sum(Bn(:,1)'.*u(x(i),0:N-1)./n); 
+    f3(i) = -2/(1+kappa)*sqrt(1 - x(i).^2).*sum(Bn(:,2)'.*u(x(i),0:N-1)./n); 
 end
 
-plot(x,f1)
+plot(x,f1,'k.-')
 hold on
-plot(x,f2)
-plot(x,f3)
+plot(x,f2,'k-')
+plot(x,f3,'k--')
 xlabel('$x/a$')
-ylabel('$\overline{\mathbf{v}}$')
+ylabel('$\overline{v}$')
 legend('\delta = 0','\theta = 0','\theta = \pi/2')
-axis([-1 1 0 3.2])
-yticks(0:0.4:3.2)
+
+% for delta = 0.5
+% axis([-1 1 0 1.2])
+% yticks(0:0.4:1.2)
+
+% for delta = 2.5
+axis([-1 1 0 2.4])
+yticks(0:0.4:2.4)
